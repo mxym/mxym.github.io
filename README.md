@@ -1,6 +1,7 @@
 # 💌 DearNikki
 
-> 基于 [** Fuwari **](https://github.com/saicaca/fuwari) 开发的静态博客模板。
+> 基于 [Fuwari](https://github.com/saicaca/fuwari) 开发的静态博客模板。
+>
 > ❗ 警告：该项目的修改部分有来自 AI 的帮助
 
 ![预览](https://raw.githubusercontent.com/Rabbit0w0/dear-nikki/main/nikki-screenshot.png)
@@ -107,6 +108,6 @@ Vercel / Netlify / GitHub Pages 等均可使用
 
 ---
 
-> 本项目基于原仓库 [** Fuwari **](https://github.com/saicaca/fuwari) 的代码进行 fork 和修改。
+> 本项目基于原仓库 [Fuwari](https://github.com/saicaca/fuwari) 的代码进行 fork 和修改。
 > 原项目的许可证：MIT License (见 LICENSE-Fuwari 文件)
 > 新增内容仍遵循 MIT License
