@@ -3,7 +3,7 @@
 > 基于 [** Fuwari **](https://github.com/saicaca/fuwari) 开发的静态博客模板。
 > ❗ 警告：该项目的修改部分有来自 AI 的帮助
 
-![预览](https://raw.githubusercontent.com/Rabbit0w0/resource/main/dear-nikki/nikki-screenshot.png)
+![预览](https://raw.githubusercontent.com/Rabbit0w0/dear-nikki/main/nikki-screenshot.png)
 
 ## 🚀 使用方法
 
