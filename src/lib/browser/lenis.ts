@@ -1,4 +1,5 @@
 import Lenis from "lenis";
+import { siteConfig } from "@/config";
 
 declare global {
     interface Window {
@@ -41,6 +42,8 @@ function startLenisRaf() {
  */
 export function initLenis() {
     destroyLenis();
+
+    if (!siteConfig.scrolling.smooth) return;
 
     lenis = new Lenis({
         lerp: 0.1,

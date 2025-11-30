@@ -35,6 +35,10 @@ export type SiteConfig = {
         depth: 1 | 2 | 3;
     };
 
+    scrolling: {
+        smooth: boolean;
+    };
+
     favicon: Favicon[];
 };
 
