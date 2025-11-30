@@ -1,0 +1,68 @@
+---
+import "@fontsource-variable/jetbrains-mono";
+import "@fontsource-variable/jetbrains-mono/wght-italic.css";
+
+interface Props {
+    class?: string;
+}
+
+const { class: className = "" } = Astro.props as Props;
+---
+
+<div
+    data-pagefind-body
+    class={`prose dark:prose-invert prose-base !max-w-none markdown ${className}`}
+>
+    <slot />
+</div>
+
+<script is:inline>
+    document.addEventListener("click", (ev) => {
+        const rawTarget = ev.target;
+        if (!(rawTarget instanceof Element)) return;
+
+        const target = rawTarget.closest(".copy-btn");
+        if (!target) return;
+
+        const pre = target.closest("pre");
+        const codeEl = pre?.querySelector("code");
+        if (!codeEl) return;
+
+        const tokenNodes = codeEl.querySelectorAll(".code:not(summary *)");
+        const text =
+            tokenNodes.length > 0
+                ? Array.from(tokenNodes, (el) =>
+                      el.textContent === "\n" ? "" : (el.textContent ?? ""),
+                  ).join("\n")
+                : (codeEl.textContent ?? "");
+
+        const writeToClipboard = async (t) => {
+            try {
+                await navigator.clipboard.writeText(t);
+                return true;
+            } catch {
+                return false;
+            }
+        };
+
+        const prevId = target.getAttribute("data-timeout-id");
+        if (prevId) {
+            window.clearTimeout(Number(prevId));
+        }
+
+        writeToClipboard(text).then((ok) => {
+            target.classList.toggle("success", ok);
+            target.classList.toggle("error", !ok);
+
+            target.setAttribute("aria-live", "polite");
+            target.setAttribute("aria-label", ok ? "Copied!" : "Copy failed");
+
+            const newId = window.setTimeout(() => {
+                target.classList.remove("success", "error");
+                target.setAttribute("aria-label", "Copy code");
+            }, 1200);
+
+            target.setAttribute("data-timeout-id", String(newId));
+        });
+    });
+</script>

@@ -1,0 +1,46 @@
+.expressive-code {
+    .frame {
+        @apply !shadow-none;
+    }
+
+    .title {
+        font-family: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+}
+
+/* Progressive code block loading */
+figure.expressive-code {
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+figure.expressive-code.code-block-loading {
+    opacity: 0;
+    transform: translateY(10px);
+    
+    /* Skeleton placeholder effect */
+    position: relative;
+    min-height: 200px;
+    background: linear-gradient(
+        90deg,
+        var(--codeblock-bg) 0%,
+        oklch(from var(--codeblock-bg) calc(l + 0.05) c h) 50%,
+        var(--codeblock-bg) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-pulse 1.5s ease-in-out infinite;
+    border-radius: 0.75rem;
+}
+
+@keyframes skeleton-pulse {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+figure.expressive-code.code-block-loaded {
+    opacity: 1;
+    transform: translateY(0);
+}

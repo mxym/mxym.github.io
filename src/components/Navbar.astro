@@ -1,0 +1,218 @@
+---
+import { Icon } from "astro-icon/components";
+import { navBarConfig, siteConfig } from "../config";
+import { LinkPresets } from "../constants/link-presets";
+import { LinkPreset, type NavBarLink } from "../types/config";
+import { url } from "../utils/url";
+import LightDarkSwitch from "./LightDarkSwitch.svelte";
+import ImageWrapper from "./misc/ImageWrapper.astro";
+import Search from "./Search.svelte";
+import DisplaySettings from "./widget/DisplaySettings.svelte";
+import NavMenuPanel from "./widget/NavMenuPanel.astro";
+
+const className = Astro.props.class;
+const isProd = import.meta.env.PROD;
+
+const links: NavBarLink[] = navBarConfig.links.map(
+    (item: NavBarLink | LinkPreset): NavBarLink =>
+        typeof item === "number" ? LinkPresets[item] : item,
+);
+
+const MAX_DESKTOP_LINKS = 5; // tweak as you like
+
+const mainLinks = links.slice(0, MAX_DESKTOP_LINKS);
+const overflowLinks = links.slice(MAX_DESKTOP_LINKS);
+---
+
+<div
+  id="navbar"
+  class="z-50 mt-4 onload-animation card-transparent !overflow-visible backdrop-blur-md bg-white/30 dark:bg-black/30"
+>
+  <div
+    class:list={[
+      className,
+      "card-transparent !overflow-visible !bg-transparent max-w-[var(--page-width)] h-[4.5rem] mx-auto flex items-center justify-between px-6 relative",
+    ]}
+  >
+    <a
+      href={url("/")}
+      class="logo-container block h-[3rem] px-4 transition duration-300 hover:scale-105 hover:bg-[var(--primary)]/5 active:scale-95 will-change-transform"
+      aria-label="Home"
+    >
+      {
+        navBarConfig.logo.image ? (
+          <ImageWrapper
+            src={navBarConfig.logo.src}
+            alt={siteConfig.title}
+            class="h-full w-auto object-contain"
+          />
+        ) : (
+          <div class="flex flex-row h-full text-[var(--primary)] text-[1.45rem] items-center text-md">
+            <Icon
+              name="material-symbols:home-outline-rounded"
+              class="text-[1.85rem] mb-1 mr-2"
+            />
+            {siteConfig.title}
+          </div>
+        )
+      }
+    </a>
+
+    <nav class="hidden md:flex gap-1" aria-label="Main">
+      {
+        mainLinks.map((l) => (
+          <a
+            aria-label={l.name}
+            href={l.external ? l.url : url(l.url)}
+            target={l.external ? "_blank" : undefined}
+            rel={l.external ? "noopener noreferrer" : undefined}
+            class="group relative h-11 font-semibold px-5 hover:scale-105 active:scale-95 flex items-center text-75 hover:text-[var(--primary)] transition-all"
+          >
+            <div class="flex items-center">
+              <span class="relative z-10">{l.name}</span>
+              {l.external && (
+                <Icon
+                  name="fa6-solid:arrow-up-right-from-square"
+                  class="text-[0.75rem] -translate-y-[1px] ml-1.5 text-30 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all"
+                />
+              )}
+            </div>
+          </a>
+        ))
+      }
+    </nav>
+
+    {
+      overflowLinks.length > 0 && (
+        <div
+          id="more-menu-group"
+          class="relative h-11 hidden md:flex items-center"
+        >
+          <button
+            id="more-menu-switch"
+            type="button"
+            class="list-none cursor-pointer font-semibold px-3 h-full flex items-center text-75 hover:text-[var(--primary)] hover:scale-105 active:scale-95 transition-all"
+          >
+            <span class="relative z-10 mr-1">More</span>
+            <Icon
+              name="material-symbols:expand-more-rounded"
+              class="rotate-icon text-[1.1rem] text-50 transition-transform"
+            />
+          </button>
+          <div
+            id="more-menu-panel"
+            class="absolute right-0 top-full mt-2 float-panel float-panel-closed py-2 min-w-[10rem] z-50 translate-all"
+          >
+            {overflowLinks.map((link) => (
+              <a
+                aria-label={link.name}
+                href={link.external ? link.url : url(link.url)}
+                target={link.external ? "_blank" : undefined}
+                rel={link.external ? "noopener noreferrer" : undefined}
+                class="group relative h-11 font-semibold px-5 hover:scale-105 active:scale-95 flex items-center text-75 hover:text-[var(--primary)] transition-all"
+              >
+                <div class="flex items-center">
+                  <span class="relative z-10">{link.name}</span>
+                </div>
+                {!link.external && (
+                  <Icon
+                    name="material-symbols:chevron-right-rounded"
+                    class="text-[0.75rem] -translate-y-[1px] ml-1.5 text-30 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all"
+                  />
+                )}
+                {link.external && (
+                  <Icon
+                    name="fa6-solid:arrow-up-right-from-square"
+                    class="text-[0.75rem] -translate-y-[1px] ml-1.5 text-30 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all"
+                  />
+                )}
+              </a>
+            ))}
+          </div>
+        </div>
+      )
+    }
+
+    <div class="flex items-center gap-1">
+      <Search client:only="svelte" />
+      {
+        !siteConfig.themeColor.fixed && (
+          <button
+            aria-label="Display Settings"
+            class="relative btn-plain scale-animation rounded-[var(--radius-large)] h-11 w-11 active:scale-90"
+            id="display-settings-switch"
+            type="button"
+          >
+            <Icon
+              name="material-symbols:palette-outline"
+              class="text-[1.25rem] text-75"
+            />
+          </button>
+        )
+      }
+      <LightDarkSwitch client:only="svelte" />
+      <button
+        aria-label="Menu"
+        name="Nav Menu"
+        class="w-11 h-11 transition duration-300 hover:bg-[var(--primary)]/10 hover:scale-105 active:scale-90 flex md:hidden items-center justify-center will-change-transform"
+        id="nav-menu-switch"
+        type="button"
+      >
+        <Icon
+          name="material-symbols:menu-rounded"
+          class="text-[1.25rem] text-75"
+        />
+      </button>
+    </div>
+
+    <NavMenuPanel links={links} />
+    <DisplaySettings client:only="svelte" />
+  </div>
+</div>
+
+<script>
+  import { initNavbar } from "../lib/browser/navbar";
+  initNavbar();
+</script>
+
+<script
+  is:inline
+  define:vars={{ scriptUrl: url("/pagefind/pagefind.js"), isProd }}
+>
+  if (isProd) {
+    (async () => {
+      const loadPagefind = async () => {
+        try {
+          const headOk = await fetch(scriptUrl, { method: "HEAD" });
+          if (!headOk.ok)
+            throw new Error(`Pagefind script not found: ${headOk.status}`);
+
+          const pagefind = await import(scriptUrl);
+          await pagefind.options({ excerptLength: 20 });
+          window.pagefind = pagefind;
+
+          document.dispatchEvent(new CustomEvent("pagefindready"));
+          console.log(
+            "Pagefind loaded and initialized successfully, event dispatched.",
+          );
+        } catch (error) {
+          console.error("Failed to load Pagefind:", error);
+          window.pagefind = {
+            search: () => Promise.resolve({ results: [] }),
+            options: () => Promise.resolve(),
+          };
+          document.dispatchEvent(new CustomEvent("pagefindloaderror"));
+          console.log("Pagefind load error, event dispatched.");
+        }
+      };
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", loadPagefind, {
+          once: true,
+        });
+      } else {
+        loadPagefind();
+      }
+    })();
+  }
+</script>

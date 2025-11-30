@@ -1,0 +1,136 @@
+---
+import { Icon } from "astro-icon/components";
+import I18nKey from "../i18n/i18nKey";
+import { i18n } from "../i18n/translation";
+import { formatDateToYYYYMMDD } from "../utils/date";
+import { getCategoryUrl, getTagUrl } from "../utils/url";
+
+interface Props {
+    class?: string;
+    published: Date;
+    updated?: Date;
+    tags: string[];
+    category: string | null;
+    hideTagsForMobile?: boolean;
+    hideUpdateDate?: boolean;
+}
+
+const {
+    class: className = "",
+    published,
+    updated,
+    tags = [],
+    category,
+    hideTagsForMobile = false,
+    hideUpdateDate = false,
+} = Astro.props as Props;
+
+const hasTags = Array.isArray(tags) && tags.length > 0;
+const showUpdatedDate =
+    !hideUpdateDate &&
+    updated instanceof Date &&
+    published instanceof Date &&
+    updated.getTime() !== published.getTime();
+
+const tagContainerClass = [
+    "items-center",
+    hideTagsForMobile ? "hidden md:flex" : "flex",
+];
+
+const categoryLabel = category || i18n(I18nKey.uncategorized);
+const categoryUrl = getCategoryUrl(category);
+---
+
+<div
+    class:list={[
+        "flex flex-wrap text-neutral-500 dark:text-neutral-400 items-center gap-4 gap-x-4 gap-y-2",
+        className,
+    ]}
+>
+    <!-- publish date -->
+    <div class="flex items-center">
+        <div class="meta-icon">
+            <Icon
+                name="material-symbols:calendar-today-outline-rounded"
+                class="text-xl"
+            />
+        </div>
+        <span class="text-50 text-sm font-medium">
+            {formatDateToYYYYMMDD(published)}
+        </span>
+    </div>
+
+    <!-- update date -->
+    {
+        showUpdatedDate && (
+            <div class="flex items-center">
+                <div class="meta-icon">
+                    <Icon
+                        name="material-symbols:edit-calendar-outline-rounded"
+                        class="text-xl"
+                    />
+                </div>
+                <span class="text-50 text-sm font-medium">
+                    {formatDateToYYYYMMDD(updated!)}
+                </span>
+            </div>
+        )
+    }
+
+    <!-- categories -->
+    <div class="flex items-center">
+        <div class="meta-icon">
+            <Icon
+                name="material-symbols:book-2-outline-rounded"
+                class="text-xl"
+            />
+        </div>
+        <div class="flex flex-row flex-nowrap items-center">
+            <a
+                href={categoryUrl}
+                aria-label={`View all posts in the ${categoryLabel} category`}
+                class="link-lg transition text-50 text-sm font-medium hover:text-[var(--primary)] dark:hover:text-[var(--primary)] whitespace-nowrap"
+            >
+                {categoryLabel}
+            </a>
+        </div>
+    </div>
+
+    <!-- tags -->
+    <div class:list={tagContainerClass}>
+        <div class="meta-icon">
+            <Icon name="material-symbols:tag-rounded" class="text-xl" />
+        </div>
+
+        <div class="flex flex-row flex-nowrap items-center">
+            {
+                hasTags ? (
+                    tags.map((tag, index) => {
+                        const trimmed = tag.trim();
+
+                        return (
+                            <span class="flex flex-row flex-nowrap items-center">
+                                {index > 0 && (
+                                    <span class="mx-1.5 text-[var(--meta-divider)] text-sm">
+                                        /
+                                    </span>
+                                )}
+                                <a
+                                    href={getTagUrl(trimmed)}
+                                    aria-label={`View all posts with the ${trimmed} tag`}
+                                    class="link-lg transition text-50 text-sm font-medium hover:text-[var(--primary)] dark:hover:text-[var(--primary)] whitespace-nowrap"
+                                >
+                                    {trimmed}
+                                </a>
+                            </span>
+                        );
+                    })
+                ) : (
+                    <div class="transition text-50 text-sm font-medium">
+                        {i18n(I18nKey.noTags)}
+                    </div>
+                )
+            }
+        </div>
+    </div>
+</div>

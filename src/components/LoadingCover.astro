@@ -1,0 +1,91 @@
+---
+import { siteConfig } from "@/config";
+---
+
+<div id="loading-cover" class="loading-cover">
+    <div class="loading-content">
+        <div class="spinner"></div>
+        <div class="loading-text">{siteConfig.title}</div>
+    </div>
+</div>
+
+<style>
+    .loading-cover {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: var(--page-bg);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        transition:
+            opacity 0.5s ease-out,
+            visibility 0.5s ease-out;
+    }
+
+    .loading-cover.loaded {
+        opacity: 0;
+        visibility: hidden;
+    }
+
+    .loading-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .spinner {
+        width: 48px;
+        height: 48px;
+        border: 3px solid transparent;
+        border-top-color: oklch(0.7 0.14 var(--hue));
+        border-right-color: oklch(0.7 0.14 var(--hue));
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root:not(.light) .spinner {
+            border-top-color: oklch(0.75 0.14 var(--hue));
+            border-right-color: oklch(0.75 0.14 var(--hue));
+        }
+    }
+
+    :root.dark .spinner {
+        border-top-color: oklch(0.75 0.14 var(--hue));
+        border-right-color: oklch(0.75 0.14 var(--hue));
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    .loading-text {
+        font-size: 1.25rem;
+        font-weight: 500;
+        color: var(--primary);
+        letter-spacing: 0.05em;
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%,
+        100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.6;
+        }
+    }
+</style>

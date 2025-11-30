@@ -1,0 +1,109 @@
+---
+import type { MarkdownHeading } from "astro";
+import { siteConfig } from "../../config";
+import { url } from "../../utils/url";
+
+interface Props {
+    class?: string;
+    headings?: MarkdownHeading[];
+}
+
+const { headings = [], class: className } = Astro.props as Props;
+
+const isPostsRoute = Astro.url.pathname.startsWith(url("/posts/"));
+const maxLevel = siteConfig.toc.depth;
+
+const minDepth =
+    headings.length > 0
+        ? headings.reduce(
+              (min, { depth }) => Math.min(min, depth),
+              Number.POSITIVE_INFINITY,
+          )
+        : 1;
+
+/** Remove a trailing "#" (often left by some Markdown heading generators). */
+const removeTrailingHash = (text: string) => {
+    const lastIndexOfHash = text.lastIndexOf("#");
+    if (lastIndexOfHash !== text.length - 1) return text;
+    return text.slice(0, lastIndexOfHash);
+};
+
+const visibleHeadings = headings.filter(
+    (heading) => heading.depth < minDepth + maxLevel,
+);
+
+// Used to number only the top-level headings in the TOC.
+let topLevelHeadingIndex = 0;
+---
+
+{
+    isPostsRoute && (
+        <table-of-contents class:list={[className, "group"]}>
+            {visibleHeadings.map((heading) => {
+                const isTopLevel = heading.depth === minDepth;
+                const isSecondLevel = heading.depth === minDepth + 1;
+                const isThirdLevel = heading.depth === minDepth + 2;
+
+                if (isTopLevel) {
+                    topLevelHeadingIndex += 1;
+                }
+
+                return (
+                    <a
+                        href={`#${heading.slug}`}
+                        class="px-2 flex gap-2 relative transition w-full min-h-9 rounded-xl
+                            hover:bg-[var(--toc-btn-hover)] active:bg-[var(--toc-btn-active)] py-2"
+                    >
+                        <div
+                            class:list={[
+                                "transition w-5 h-5 shrink-0 rounded-lg text-xs flex items-center justify-center font-bold",
+                                {
+                                    "bg-[var(--toc-badge-bg)] text-[var(--btn-content)]":
+                                        isTopLevel,
+                                    "ml-4": isSecondLevel,
+                                    "ml-8": isThirdLevel,
+                                },
+                            ]}
+                        >
+                            {isTopLevel && topLevelHeadingIndex}
+                            {isSecondLevel && (
+                                <div class="transition w-2 h-2 rounded-[0.1875rem] bg-[var(--toc-badge-bg)]" />
+                            )}
+                            {isThirdLevel && (
+                                <div class="transition w-1.5 h-1.5 rounded-sm bg-black/5 dark:bg.white/10" />
+                            )}
+                        </div>
+
+                        <div
+                            class:list={[
+                                "transition text-sm",
+                                {
+                                    "text-50": isTopLevel || isSecondLevel,
+                                    "text-30": isThirdLevel,
+                                },
+                            ]}
+                        >
+                            {removeTrailingHash(heading.text)}
+                        </div>
+                    </a>
+                );
+            })}
+
+            <div
+                id="active-indicator"
+                style="opacity: 0"
+                class:list={[
+                    { hidden: headings.length === 0 },
+                    "-z-10 absolute bg-[var(--toc-btn-hover)] left-0 right-0 rounded-xl transition-all " +
+                        "group-hover:bg-transparent border-2 border-[var(--toc-btn-hover)] " +
+                        "group-hover:border-[var(--toc-btn-active)] border-dashed",
+                ]}
+            />
+        </table-of-contents>
+    )
+}
+
+<script>
+    import { initTableOfContents } from "@lib/browser";
+    initTableOfContents();
+</script>
