@@ -308,3 +308,40 @@
 }
 
 @tailwind utilities;
+
+
+/* ========================================= */
+/* 用户自定义：极致纯灰 / 工业灰风格 (修复版) */
+/* ========================================= */
+
+:root.dark {
+    /* 1. 【关键】把大背景改成纯粹的中性灰 (不再带蓝色) */
+    --page-bg: #121212 !important;
+
+    /* 2. 卡片背景：稍亮的中性灰 */
+    --card-bg: #1e1e1e !important;
+
+    /* 3. 悬浮面板/侧边栏背景 */
+    --float-panel-bg: #1a1a1a !important;
+
+    /* 4. 按钮背景：中性深灰 */
+    --btn-regular-bg: #2a2a2a !important;
+    --btn-card-bg-hover: #333333 !important;
+}
+
+/* 5. 强制去色滤镜 (针对原本带颜色的文字、图标、高亮) */
+/* 这一步会让所有蓝色的字变成银白色 */
+:root {
+    --primary: #d4d4d4 !important; /* 强制高亮色为银白 */
+}
+
+/* 给带颜色的组件加黑白滤镜 */
+.btn-regular, .btn-plain, .link, .link-lg, .markdown a, .tags a {
+    filter: grayscale(100%) !important;
+}
+
+/* 6. (可选) 解决文字选中背景色 */
+::selection {
+    background-color: #555 !important; /* 深灰背景 */
+    color: #fff !important;
+}
