@@ -345,3 +345,30 @@
     background-color: #555 !important; /* 深灰背景 */
     color: #fff !important;
 }
+
+/* === 性能优化：关闭所有毛玻璃模糊特效 === */
+* {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+/* === 性能终极优化：修复选中文本卡顿 === */
+
+/* 1. 禁用所有纯文本标签的过渡动画 */
+/* 这些元素只是用来读的，不需要动，关掉它们能大幅提升选中流畅度 */
+p, span, h1, h2, h3, h4, h5, h6, li, ul, ol, blockquote, strong, em, code, pre {
+    transition: none !important;
+}
+
+/* 2. (可选) 仅保留链接的颜色变化动画，但也限制只动颜色 */
+a {
+    transition: color 0.15s ease, background-color 0.15s ease !important;
+}
+
+/* 3. 优化选中背景的渲染性能 */
+::selection {
+    /* 确保选中背景色是不透明的，或者简单的颜色，减少混合计算 */
+    background-color: #444 !important;
+    color: #fff !important;
+    text-shadow: none !important; /* 选中时去掉阴影 */
+}

@@ -106,6 +106,7 @@ export default defineConfig({
     ],
     markdown: {
         remarkPlugins: [
+            remarkAutoText,
             remarkMath,
             remarkReadingTime,
             remarkExcerpt,
