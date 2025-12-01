@@ -1,0 +1,71 @@
+---
+import MainGridLayout from "../layouts/MainGridLayout.astro";
+import { i18n } from "../i18n/translation";
+import I18nKey from "../i18n/i18nKey";
+
+// ============================================
+// 👇 在这里添加你的朋友 (修改这个数组)
+// ============================================
+const friendsData = [
+    {
+        name: " ItsFlicker",
+        url: "https://blog.mcitd.cn/about/",
+        avatar: "https://blog.mcitd.cn/_astro/avatar.zT8EqTHN_S4v1p.webp", // 这里的图片最好用 HTTPS 链接
+        description: ""
+    },
+    {
+        name: " xNftrOne",
+        url: "https://www.cnblogs.com/xNftrOne",
+        avatar: "https://ooo.0x0.ooo/2025/05/27/OdV7Q6.jpg", // 这里的图片最好用 HTTPS 链接
+        description: "hamburger方向创始人"
+    },
+    {
+        name: " L1nk",
+        url: "https://li1nk3.github.io/",
+        avatar: "https://li1nk3.github.io/image/icon.jpg", // 这里的图片最好用 HTTPS 链接
+        description: "Live long and pwn"
+    },
+];
+// ============================================
+
+---
+
+<MainGridLayout title="友链" description="我的朋友们">
+    <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32">
+        <div class="card-base z-10 px-9 py-6 relative w-full">
+
+            <h1 class="text-2xl font-bold mb-4"></h1>
+            <p class="mb-8 opacity-75">
+                欢迎互换友链喵！<br>
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {friendsData.map((friend) => (
+                    <a
+                        href={friend.url}
+                        target="_blank"
+                        class="group flex items-center p-4 rounded-lg bg-[var(--card-bg)] border border-black/5 dark:border-white/10 hover:bg-[var(--btn-plain-bg-hover)] transition-all duration-300 decoration-none no-underline"
+                    >
+                        <div class="flex-shrink-0 mr-4">
+                            <img
+                                src={friend.avatar}
+                                alt={friend.name}
+                                class="w-16 h-16 rounded-full object-cover border-2 border-white/20 group-hover:rotate-12 transition-transform duration-300"
+                            />
+                        </div>
+
+                        <div class="overflow-hidden">
+                            <h3 class="font-bold text-lg truncate group-hover:text-[var(--primary)] transition-colors">
+                                {friend.name}
+                            </h3>
+                            <p class="text-sm opacity-60 line-clamp-2 mt-1">
+                                {friend.description}
+                            </p>
+                        </div>
+                    </a>
+                ))}
+            </div>
+
+            </div>
+    </div>
+</MainGridLayout>
