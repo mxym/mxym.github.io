@@ -16,6 +16,7 @@ import remarkDirective from "remark-directive"; /* Handle directives */
 import remarkGithubAdmonitionsToDirectives from "remark-github-admonitions-to-directives";
 import remarkMath from "remark-math";
 import remarkSectionize from "remark-sectionize";
+import { remarkAutoText } from './src/plugins/remark-auto-text.mjs';
 import { expressiveCodeConfig } from "./src/config.ts";
 import { pluginCopyButton } from "./src/plugins/expressive-code/copy-button.js";
 import { pluginLanguageBadge } from "./src/plugins/expressive-code/language-badge.ts";
