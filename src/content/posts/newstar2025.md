@@ -1,6 +1,6 @@
 ---
 title: Newstar2025
-published: 2025-12-01
+published: 2025-11-30
 description: "第一个打的新生赛，选了re和misc方向，好玩爱玩，感觉博客好好看就把我的抽象题解放过来吧"
 tags: ["新生赛", "CTF"]
 category: 新生赛
