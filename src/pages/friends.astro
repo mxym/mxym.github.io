@@ -55,6 +55,13 @@ const friendsData = [
         description: "善良漂亮有实力的re姐姐",
         tags: ["Reverse"]
     },
+    {
+        name: "daimi",
+        url: "https://imi-imiab.com/",
+        avatar: "",
+        description: "简直是Pwn之神",
+        tags: ["Pwn"]
+    },
 ];
 
 const allTags = ["全部", ...new Set(friendsData.flatMap(f => f.tags))];
@@ -106,14 +113,16 @@ const allTags = ["全部", ...new Set(friendsData.flatMap(f => f.tags))];
                         data-tags={friend.tags.join(",")}
                     >
                         <div class="flex items-center mb-4">
-                            <a href={friend.url} target="_blank" class="flex-shrink-0 mr-4 cursor-pointer">
-                                <img
-                                    src={friend.avatar}
-                                    alt={friend.name}
-                                    class="w-16 h-16 rounded-2xl object-cover shadow-sm group-hover:scale-105 transition-transform duration-300 ring-2 ring-blue-900/30"
-                                    loading="lazy"
-                                />
-                            </a>
+                            {friend.avatar && (
+                                <a href={friend.url} target="_blank" class="flex-shrink-0 mr-4 cursor-pointer">
+                                    <img
+                                        src={friend.avatar}
+                                        alt={friend.name}
+                                        class="w-16 h-16 rounded-2xl object-cover shadow-sm group-hover:scale-105 transition-transform duration-300 ring-2 ring-blue-900/30"
+                                        loading="lazy"
+                                    />
+                                </a>
+                            )}
                             <div class="overflow-hidden">
                                 <a href={friend.url} target="_blank" class="block font-bold text-lg truncate text-blue-50 hover:text-blue-400 transition-colors">
                                     {friend.name}
