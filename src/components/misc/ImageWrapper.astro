@@ -9,12 +9,18 @@ interface Props {
     position?: string;
     basePath?: string;
     noDarken?: boolean;
+    loading?: "lazy" | "eager";
+    fetchpriority?: "high" | "low" | "auto";
+    widths?: number[];
+    sizes?: string;
+    width?: number;
+    height?: number;
+    quality?: number;
 }
 
 import { Image } from "astro:assets";
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
-import { generateImageCover } from "@utils/image-cover";
 import { url } from "@utils/url";
 
 const {
@@ -24,6 +30,13 @@ const {
     position = "center",
     basePath = "/",
     noDarken = false,
+    loading = "lazy",
+    fetchpriority = "auto",
+    widths,
+    sizes,
+    width,
+    height,
+    quality,
 } = Astro.props;
 const className = Astro.props.class;
 
@@ -65,21 +78,7 @@ if (isLocal) {
     }
 }
 
-let shouldDarken = !noDarken;
-let imageCover = null;
-if (isLocal && img && !noDarken) {
-    const normalizedPath = path
-        .normalize(path.join("../../", basePath, src))
-        .replace(/\\/g, "/");
-
-    const absolutePath = path.resolve(
-        path.join(process.cwd(), "src", normalizedPath.replace("../../", "")),
-    );
-
-    if (shouldDarken) {
-        imageCover = await generateImageCover(absolutePath);
-    }
-}
+const shouldDarken = !noDarken;
 
 const imageStyle = `object-position: ${position}`;
 ---
@@ -115,29 +114,25 @@ const imageStyle = `object-position: ${position}`;
 		<span>{i18n(I18nKey.imageLoadError)}</span>
 	</div>
 
-	{
-		shouldDarken &&
-			(imageCover ? (
-				<img
-					src={imageCover}
-					aria-hidden="true"
-					alt=""
-					class="transition-all duration-300 absolute inset-0 w-full h-full object-cover pointer-events-none opacity-0 dark:opacity-40"
-					style={imageStyle}
-				/>
-			) : (
-				<div class="transition-all duration-300 absolute inset-0 dark:bg-black/30 pointer-events-none" />
-			))
-	}
+    {shouldDarken && (
+        <div class="transition-all duration-300 absolute inset-0 dark:bg-black/30 pointer-events-none" />
+    )}
 	{
 		isLocal && img && (
 			<Image
 				src={img}
-				alt={alt || ""}
-				class="w-full h-full object-cover opacity-0"
-				style={imageStyle}
-				loading="lazy"
-				data-main-image
+                alt={alt || ""}
+                class="w-full h-full object-cover opacity-0"
+                style={imageStyle}
+                loading={loading}
+                fetchpriority={fetchpriority}
+                widths={widths}
+                sizes={sizes}
+                layout="none"
+                width={width}
+                height={height}
+                quality={quality}
+                data-main-image
 			/>
 		)
 	}
@@ -145,15 +140,19 @@ const imageStyle = `object-position: ${position}`;
 		!isLocal && (
 			<img
 				src={isPublic ? url(src) : src}
-				alt={alt || ""}
-				class="w-full h-full object-cover opacity-0"
-				style={imageStyle}
-				loading="lazy"
-				data-main-image
+                alt={alt || ""}
+                class="w-full h-full object-cover opacity-0"
+                style={imageStyle}
+                loading={loading}
+                width={width}
+                height={height}
+                fetchpriority={fetchpriority}
+                data-main-image
 			/>
 		)
 	}
 </div>
+
 
 <script>
 	function setupImageLoad() {
@@ -162,7 +161,7 @@ const imageStyle = `object-position: ${position}`;
 		wrappers.forEach((wrapper) => {
 			const img = wrapper.querySelector(
 				"img[data-main-image]",
-			) as HTMLImageElement;
+			) as HTMLImageElement | null;
 			const placeholder = wrapper.querySelector(".placeholder");
 			const errorMessage = wrapper.querySelector(".error-message");
 
@@ -190,6 +189,9 @@ const imageStyle = `object-position: ${position}`;
 		});
 	}
 
-	document.addEventListener("astro:page-load", setupImageLoad);
-	setupImageLoad();
+    if (!window.mxymImageLoadHandlerInstalled) {
+        window.mxymImageLoadHandlerInstalled = true;
+        document.addEventListener("astro:page-load", setupImageLoad);
+    }
+    setupImageLoad();
 </script>

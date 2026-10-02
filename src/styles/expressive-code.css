@@ -8,6 +8,22 @@
     }
 }
 
+/*
+ * Code blocks are often the most expensive part of a long post to lay out
+ * and paint. Small snippets are cheap to render and should keep their exact
+ * height. Defer only genuinely long blocks, where skipping off-screen line
+ * layout and paint provides a measurable win. The intrinsic block size keeps
+ * the document's scroll range stable while an off-screen block is skipped.
+ * Keep this on the wrapper rather than individual lines: line wrapping can
+ * change their height and would make a per-line estimate inaccurate. `:has`
+ * is progressive here: if it is unavailable, the code remains fully rendered
+ * as before.
+ */
+.expressive-code:has(.ec-line:nth-child(40)) {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 24rem;
+}
+
 /* Progressive code block loading */
 figure.expressive-code {
     transition: opacity 0.3s ease-out, transform 0.3s ease-out;
@@ -43,4 +59,19 @@ figure.expressive-code.code-block-loading {
 figure.expressive-code.code-block-loaded {
     opacity: 1;
     transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .expressive-code,
+    figure.expressive-code,
+    figure.expressive-code.code-block-loading,
+    figure.expressive-code.code-block-loaded {
+        transition: none;
+        animation: none;
+        transform: none;
+    }
+
+    figure.expressive-code.code-block-loading {
+        opacity: 1;
+    }
 }

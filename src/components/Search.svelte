@@ -3,6 +3,7 @@ import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import Icon from "@iconify/svelte";
 import { url } from "@utils/url";
+import { loadPagefind } from "@lib/browser/search";
 import { onDestroy, onMount } from "svelte";
 import { fade } from "svelte/transition";
 import type { SearchResult } from "@/global";
@@ -11,12 +12,14 @@ let keywordDesktop = "";
 let keywordMobile = "";
 let result: SearchResult[] = [];
 let isSearching = false;
-let pagefindLoaded = false;
 let initialized = false;
 
 const DEBOUNCE_MS = 200;
 let debounceId: ReturnType<typeof setTimeout> | null = null;
-let lastIssuedQuery = ""; // avoid outdated results winning the race
+let searchRevision = 0;
+let activeField: "desktop" | "mobile" = "desktop";
+let activeKeyword = "";
+let activeIsDesktop = true;
 
 const fakeResult: SearchResult[] = [
     {
@@ -33,8 +36,18 @@ const fakeResult: SearchResult[] = [
 ];
 
 const togglePanel = () => {
+    activeField = "mobile";
+    requestPagefind();
     const panel = document.getElementById("search-panel");
     panel?.classList.toggle("float-panel-closed");
+};
+
+const requestPagefind = () => {
+    if (import.meta.env.PROD) {
+        void loadPagefind().catch(() => {
+            // Search reports a useful empty state when the index is unavailable.
+        });
+    }
 };
 
 const setPanelVisibility = (show: boolean, isDesktop: boolean): void => {
@@ -45,30 +58,26 @@ const setPanelVisibility = (show: boolean, isDesktop: boolean): void => {
 
 /**
  * Core search executor (no debounce). Sets loading state and guards against
- * out-of-order responses using `lastIssuedQuery`.
+ * out-of-order responses using a monotonically increasing revision.
  */
 const runSearch = async (
     keyword: string,
     isDesktop: boolean,
+    revision: number,
 ): Promise<void> => {
-    // empty query => close results & reset
-    if (!keyword) {
-        result = [];
-        setPanelVisibility(false, isDesktop);
-        return;
-    }
-    if (!initialized) return;
-
     isSearching = true;
-    const thisQuery = keyword.trim();
-    lastIssuedQuery = thisQuery;
 
     try {
         let searchResults: SearchResult[] = [];
 
-        if (import.meta.env.PROD && pagefindLoaded && window.pagefind) {
-            const response = await window.pagefind.search(thisQuery);
-            const dataPromises = response.results.map((item) => item.data());
+        if (import.meta.env.PROD) {
+            const pagefind = await loadPagefind();
+            if (revision !== searchRevision) return;
+            const response = await pagefind.search(keyword);
+            // Search previews only need a few entries; avoid fetching every result's data.
+            const dataPromises = response.results
+                .slice(0, 12)
+                .map((item) => item.data());
             searchResults = await Promise.all(dataPromises);
         } else if (import.meta.env.DEV) {
             searchResults = fakeResult;
@@ -79,21 +88,18 @@ const runSearch = async (
             searchResults = [];
         }
 
-        // Only apply if this is still the latest query
-        if (thisQuery === lastIssuedQuery) {
+        if (revision === searchRevision) {
             result = searchResults;
             setPanelVisibility(result.length > 0, isDesktop);
         }
     } catch (error) {
-        // Only clear if this is still the latest query
-        if (thisQuery === lastIssuedQuery) {
+        if (revision === searchRevision) {
             console.error("Search error:", error);
             result = [];
             setPanelVisibility(false, isDesktop);
         }
     } finally {
-        // Only turn off loading if this is still the latest query
-        if (thisQuery === lastIssuedQuery) {
+        if (revision === searchRevision) {
             isSearching = false;
         }
     }
@@ -101,61 +107,36 @@ const runSearch = async (
 
 /** Debounced wrapper so we don’t spam pagefind. */
 const queueSearch = (keyword: string, isDesktop: boolean) => {
+    const query = keyword.trim();
+    const revision = ++searchRevision;
     if (debounceId) clearTimeout(debounceId);
-    isSearching = !!keyword && initialized; // reflect “about to search�?state
+
+    if (!query) {
+        isSearching = false;
+        result = [];
+        setPanelVisibility(false, isDesktop);
+        return;
+    }
+
+    isSearching = initialized;
     debounceId = setTimeout(() => {
-        runSearch(keyword, isDesktop);
+        void runSearch(query, isDesktop, revision);
     }, DEBOUNCE_MS);
 };
 
 onMount(() => {
-    const initializeSearch = () => {
-        initialized = true;
-        pagefindLoaded =
-            typeof window !== "undefined" &&
-            !!window.pagefind &&
-            typeof window.pagefind.search === "function";
-
-        // kick off any prefilled terms
-        if (keywordDesktop) queueSearch(keywordDesktop, true);
-        if (keywordMobile) queueSearch(keywordMobile, false);
-    };
-
-    const onReady = () => {
-        console.log("Pagefind ready event received.");
-        initializeSearch();
-    };
-    const onError = () => {
-        console.warn("Pagefind load error event received. Search limited.");
-        initializeSearch();
-    };
-
-    if (import.meta.env.DEV) {
-        console.log("Dev mode: using mock search results.");
-        initializeSearch();
-    } else {
-        document.addEventListener("pagefindready", onReady);
-        document.addEventListener("pagefindloaderror", onError);
-
-        // Fallback if event missed or already fired
-        const fallback = setTimeout(() => {
-            if (!initialized) {
-                console.log("Fallback: Initializing search after timeout.");
-                initializeSearch();
-            }
-        }, 2000);
-
-        onDestroy(() => {
-            clearTimeout(fallback);
-            document.removeEventListener("pagefindready", onReady);
-            document.removeEventListener("pagefindloaderror", onError);
-        });
-    }
+    initialized = true;
 });
 
-// Reactive search triggers (desktop & mobile), debounced
-$: initialized && queueSearch(keywordDesktop, true);
-$: initialized && queueSearch(keywordMobile, false);
+onDestroy(() => {
+    if (debounceId) clearTimeout(debounceId);
+    searchRevision++;
+});
+
+// A single active query prevents the empty hidden input from cancelling searches.
+$: activeKeyword = activeField === "desktop" ? keywordDesktop : keywordMobile;
+$: activeIsDesktop = activeField === "desktop";
+$: initialized && queueSearch(activeKeyword, activeIsDesktop);
 </script>
 
 <!-- search bar for desktop view -->
@@ -173,8 +154,10 @@ $: initialized && queueSearch(keywordMobile, false);
 	<input
 		placeholder={i18n(I18nKey.search)}
 		bind:value={keywordDesktop}
-		on:focus={() => queueSearch(keywordDesktop, true)}
-		disabled={!initialized}
+		on:focus={() => {
+			activeField = "desktop";
+			requestPagefind();
+		}}
 		class="transition-all pl-10 pr-8 text-sm bg-transparent outline-0
            h-full w-40 active:w-60 focus:w-60 text-black/50 dark:text-white/50"
 	/>
@@ -222,7 +205,10 @@ top-20 left-4 md:left-[unset] right-4 shadow-2xl rounded-2xl p-2"
 		<input
 			placeholder={i18n(I18nKey.search)}
 			bind:value={keywordMobile}
-			disabled={!initialized}
+			on:focus={() => {
+				activeField = "mobile";
+				requestPagefind();
+			}}
 			class="pl-10 pr-8 absolute inset-0 text-sm bg-transparent outline-0
            focus:w-60 text-black/50 dark:text-white/50"
 		/>
@@ -241,7 +227,7 @@ top-20 left-4 md:left-[unset] right-4 shadow-2xl rounded-2xl p-2"
 	<!-- search results -->
 	{#if isSearching}
 		<div class="px-3 py-3 text-sm text-50">Searching...</div>
-	{:else if (keywordDesktop || keywordMobile) && result.length === 0}
+	{:else if activeKeyword && result.length === 0}
 		<div class="px-3 py-3 text-sm text-50">No results found.</div>
 	{:else}
 		{#each result as item}

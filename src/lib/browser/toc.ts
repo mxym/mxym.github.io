@@ -14,13 +14,51 @@ class TableOfContents extends HTMLElement {
     active: boolean[] = [];
     activeIndicator: HTMLElement | null = null;
     private updatePending = false;
+    private lastScrollTarget: number | null = null;
+    private lastIndicatorStyle = "";
+    private readonly desktopMediaQuery: MediaQueryList;
 
     constructor() {
         super();
+        this.desktopMediaQuery = window.matchMedia("(min-width: 1536px)");
         this.observer = new IntersectionObserver(this.handleIntersections, {
             threshold: 0,
         });
     }
+
+    private isTocVisible() {
+        return (
+            this.desktopMediaQuery.matches &&
+            this.tocEl !== null &&
+            this.tocEl.getClientRects().length > 0
+        );
+    }
+
+    private observeSections() {
+        if (!this.isTocVisible()) return;
+        this.sections.forEach((section) => {
+            if (section) this.observer.observe(section);
+        });
+    }
+
+    private unobserveSections() {
+        this.sections.forEach((section) => {
+            if (section) this.observer.unobserve(section);
+        });
+    }
+
+    private handleViewportChange = () => {
+        if (this.isTocVisible()) {
+            this.observeSections();
+            this.applyFallbackActiveSection();
+            this.lastScrollTarget = null;
+            this.update();
+        } else {
+            // The TOC is `hidden` below the 2xl breakpoint. There is no value
+            // in keeping an observer on every heading of a long post then.
+            this.unobserveSections();
+        }
+    };
 
     private getHeadingIndexFromEntry(entry: IntersectionObserverEntry) {
         const target = entry.target as HTMLElement;
@@ -31,6 +69,8 @@ class TableOfContents extends HTMLElement {
     }
 
     handleIntersections = (entries: IntersectionObserverEntry[]) => {
+        if (!this.isTocVisible()) return;
+
         entries.forEach((entry) => {
             const idx = this.getHeadingIndexFromEntry(entry);
             if (idx !== undefined) {
@@ -93,7 +133,10 @@ class TableOfContents extends HTMLElement {
             !topRect ||
             !bottomRect
         ) {
-            this.activeIndicator?.setAttribute("style", "opacity: 0");
+            if (this.lastIndicatorStyle !== "opacity: 0") {
+                this.activeIndicator?.setAttribute("style", "opacity: 0");
+                this.lastIndicatorStyle = "opacity: 0";
+            }
             return;
         }
 
@@ -102,14 +145,15 @@ class TableOfContents extends HTMLElement {
         const top = topRect.top - parentRect.top + scrollOffset;
         const bottom = bottomRect.bottom - parentRect.top + scrollOffset;
 
-        this.activeIndicator?.setAttribute(
-            "style",
-            `top: ${top}px; height: ${bottom - top}px`,
-        );
+        const indicatorStyle = `top: ${top}px; height: ${bottom - top}px`;
+        if (indicatorStyle !== this.lastIndicatorStyle) {
+            this.activeIndicator?.setAttribute("style", indicatorStyle);
+            this.lastIndicatorStyle = indicatorStyle;
+        }
     };
 
     scrollToActiveHeading = () => {
-        if (this.anchorNavTarget || !this.tocEl) return;
+        if (this.anchorNavTarget || !this.tocEl || !this.isTocVisible()) return;
 
         const activeEntries = this.tocEl.querySelectorAll<HTMLElement>(
             `.${this.visibleClass}`,
@@ -131,12 +175,26 @@ class TableOfContents extends HTMLElement {
             top = bottommost.offsetTop - tocHeight * 0.8;
         }
 
+        // IntersectionObserver can report multiple entries for one scroll
+        // event. Avoid restarting the same smooth scroll on every callback.
+        if (
+            this.lastScrollTarget !== null &&
+            Math.abs(this.lastScrollTarget - top) < 1
+        ) {
+            return;
+        }
+        this.lastScrollTarget = top;
+
         this.tocEl.scrollTo({
             top,
             left: 0,
-            behavior: "smooth",
+            behavior: this.prefersReducedMotion() ? "auto" : "smooth",
         });
     };
+
+    private prefersReducedMotion() {
+        return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    }
 
     update = () => {
         if (this.updatePending) return;
@@ -144,6 +202,7 @@ class TableOfContents extends HTMLElement {
 
         requestAnimationFrame(() => {
             this.updatePending = false;
+            if (!this.isTocVisible()) return;
             this.toggleActiveHeading();
             this.scrollToActiveHeading();
         });
@@ -153,7 +212,10 @@ class TableOfContents extends HTMLElement {
         if (!this.sections.length) return;
 
         for (let i = 0; i < this.sections.length; i++) {
-            const rect = this.sections[i].getBoundingClientRect();
+            const section = this.sections[i];
+            if (!section) continue;
+
+            const rect = section.getBoundingClientRect();
             const offsetTop = rect.top;
             const offsetBottom = rect.bottom;
 
@@ -182,6 +244,7 @@ class TableOfContents extends HTMLElement {
         const idx = this.headingIdxMap.get(id);
 
         this.anchorNavTarget = idx !== undefined ? this.headings[idx] : null;
+        this.lastScrollTarget = null;
     };
 
     private isInRange(value: number, min: number, max: number) {
@@ -189,6 +252,11 @@ class TableOfContents extends HTMLElement {
     }
 
     connectedCallback() {
+        this.desktopMediaQuery.addEventListener(
+            "change",
+            this.handleViewportChange,
+        );
+
         // Wait for the onload animation to finish so `getBoundingClientRect`
         // returns correct values.
         const animatedElement = document.querySelector(".prose");
@@ -245,20 +313,23 @@ class TableOfContents extends HTMLElement {
 
         this.active = new Array(this.tocEntries.length).fill(false);
 
-        this.sections.forEach((section) => {
-            this.observer.observe(section);
-        });
-
-        this.applyFallbackActiveSection();
-        this.update();
+        if (this.isTocVisible()) {
+            this.observeSections();
+            this.applyFallbackActiveSection();
+            this.update();
+        }
     }
 
     disconnectedCallback() {
-        this.sections.forEach((section) => {
-            this.observer.unobserve(section);
-        });
+        this.desktopMediaQuery.removeEventListener(
+            "change",
+            this.handleViewportChange,
+        );
+        this.unobserveSections();
         this.observer.disconnect();
-        this.tocEl?.removeEventListener("click", this.handleAnchorClick);
+        this.tocEl?.removeEventListener("click", this.handleAnchorClick, {
+            capture: true,
+        });
     }
 }
 

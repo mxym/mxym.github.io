@@ -152,6 +152,8 @@ const { remarkPluginFrontmatter } = await entry.render();
                     basePath={path.join("content/posts/", getDir(entry.id))}
                     alt="Cover Image of the Post"
                     class="w-full h-full"
+                    widths={[240, 320, 480, 640]}
+                    sizes="(min-width: 768px) 28vw, calc(100vw - 2rem)"
                 />
             </a>
         )

@@ -7,6 +7,8 @@ import {
 import { getLenis } from "./lenis";
 
 const bannerEnabled = !!document.getElementById("banner-wrapper");
+let scrollFrame: number | null = null;
+let resizeFrame: number | null = null;
 
 /**
  * Handle scroll events for back-to-top button, TOC, and navbar visibility
@@ -84,12 +86,28 @@ function handleResize() {
     getLenis()?.resize();
 }
 
+function scheduleScrollUpdate() {
+    if (scrollFrame !== null) return;
+    scrollFrame = requestAnimationFrame(() => {
+        scrollFrame = null;
+        scrollFunction();
+    });
+}
+
+function scheduleResize() {
+    if (resizeFrame !== null) return;
+    resizeFrame = requestAnimationFrame(() => {
+        resizeFrame = null;
+        handleResize();
+    });
+}
+
 /**
  * Initialize scroll behavior listeners
  */
 export function initScrollBehavior() {
-    window.addEventListener("scroll", scrollFunction, { passive: true });
-    window.addEventListener("resize", handleResize);
+    window.addEventListener("scroll", scheduleScrollUpdate, { passive: true });
+    window.addEventListener("resize", scheduleResize);
 
     // Run once on initialization
     scrollFunction();

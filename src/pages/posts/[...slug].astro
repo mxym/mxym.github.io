@@ -13,6 +13,7 @@ import ImageWrapper from "../../components/misc/ImageWrapper.astro";
 import PostMetadata from "../../components/PostMeta.astro";
 import { profileConfig, siteConfig } from "../../config";
 import { formatDateToYYYYMMDD } from "../../utils/date";
+import "katex/dist/katex.css";
 
 export async function getStaticPaths() {
     const blogEntries = await getSortedPosts();
@@ -146,6 +147,10 @@ const jsonLd = {
                         src={entry.data.image}
                         basePath={path.join("content/posts/", getDir(entry.id))}
                         class="mb-8 rounded-xl banner-container onload-animation"
+                        widths={[640, 960, 1280, 1600, 2048]}
+                        sizes="(min-width: 768px) calc(100vw - 20rem), calc(100vw - 3rem)"
+                        loading="eager"
+                        fetchpriority="high"
                     />
                 )
             }

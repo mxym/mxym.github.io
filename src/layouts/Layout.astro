@@ -1,11 +1,8 @@
 ---
-import "@fontsource/roboto/400.css";
-import "@fontsource/roboto/500.css";
-import "@fontsource/roboto/700.css";
-import "@fontsource/m-plus-rounded-1c/400.css";
-import "@fontsource/m-plus-rounded-1c/500.css";
-import "@fontsource/m-plus-rounded-1c/700.css";
-import "katex/dist/katex.css";
+// Keep the rounded Latin face; render CJK immediately with the system fonts.
+import "@fontsource/m-plus-rounded-1c/latin-400.css";
+import "@fontsource/m-plus-rounded-1c/latin-500.css";
+import "@fontsource/m-plus-rounded-1c/latin-700.css";
 
 // blog styles
 import "../styles/variables.styl";
@@ -154,6 +151,9 @@ const siteLang = lang.replace("_", "-");
 	}
 
 	function init() {
+		if (window.mxymRuntimeInitialized) return;
+		window.mxymRuntimeInitialized = true;
+
 		loadTheme();
 		loadHue();
 		initLoadingCover();

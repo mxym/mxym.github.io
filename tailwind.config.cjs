@@ -8,8 +8,9 @@ module.exports = {
 			fontFamily: {
 				sans: [
 					"'M PLUS Rounded 1c'",
-					"Roboto",
-					"sans-serif",
+					"'PingFang SC'",
+					"'Microsoft YaHei'",
+					"'Noto Sans CJK SC'",
 					...defaultTheme.fontFamily.sans,
 				],
 			},

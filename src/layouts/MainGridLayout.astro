@@ -88,6 +88,10 @@ const bannerOffset =
                     ]}
                     src={siteConfig.banner.src}
                     position={siteConfig.banner.position}
+                    widths={[640, 960, 1280, 1600, 1920]}
+                    sizes="100vw"
+                    loading="eager"
+                    fetchpriority="high"
                 />
             </div>
         )

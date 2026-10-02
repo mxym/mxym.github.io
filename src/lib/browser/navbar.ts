@@ -1,49 +1,38 @@
+let delegatedListenerInstalled = false;
+
+/**
+ * Keep navigation controls working after Swup replaces the navbar markup.
+ * Delegation also avoids adding a new listener to every button on each view.
+ */
 export function initNavbar() {
-    const switchTheme = () => {
-        const root = document.documentElement;
-        const next = localStorage.theme === "dark" ? "light" : "dark";
-        root.classList.toggle("dark", next === "dark");
-        localStorage.theme = next;
-    };
+    if (delegatedListenerInstalled) return;
+    delegatedListenerInstalled = true;
 
-    const onReady = () => {
-        // Optional theme switch (if a button with this id exists)
-        document
-            .getElementById("scheme-switch")
-            ?.addEventListener("click", switchTheme);
+    document.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!(target instanceof Element)) return;
 
-        document
-            .getElementById("display-settings-switch")
-            ?.addEventListener("click", () => {
-                document
-                    .getElementById("display-setting")
-                    ?.classList.toggle("float-panel-closed");
-            });
+        if (target.closest("#display-settings-switch")) {
+            document
+                .getElementById("display-setting")
+                ?.classList.toggle("float-panel-closed");
+            return;
+        }
 
-        document
-            .getElementById("more-menu-switch")
-            ?.addEventListener("click", () => {
-                const panel = document.getElementById("more-menu-panel");
-                const icon = document.querySelector(
-                    "#more-menu-group .rotate-icon",
-                );
+        if (target.closest("#more-menu-switch")) {
+            document
+                .getElementById("more-menu-panel")
+                ?.classList.toggle("float-panel-closed");
+            document
+                .querySelector("#more-menu-group .rotate-icon")
+                ?.classList.toggle("open");
+            return;
+        }
 
-                panel?.classList.toggle("float-panel-closed");
-                icon?.classList.toggle("open");
-            });
-
-        document
-            .getElementById("nav-menu-switch")
-            ?.addEventListener("click", () => {
-                document
-                    .getElementById("nav-menu-panel")
-                    ?.classList.toggle("float-panel-closed");
-            });
-    };
-
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", onReady, { once: true });
-    } else {
-        onReady();
-    }
+        if (target.closest("#nav-menu-switch")) {
+            document
+                .getElementById("nav-menu-panel")
+                ?.classList.toggle("float-panel-closed");
+        }
+    });
 }

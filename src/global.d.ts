@@ -4,17 +4,24 @@ declare global {
     interface Window {
         // type from '@swup/astro' is incorrect
         swup: AstroIntegration;
-        pagefind: {
-            search: (query: string) => Promise<{
-                results: Array<{
-                    data: () => Promise<SearchResult>;
-                }>;
-            }>;
-        };
+        pagefind?: PagefindAPI;
+        mxymRuntimeInitialized?: boolean;
+        mxymImageLoadHandlerInstalled?: boolean;
+        mxymMarkdownHandlerInstalled?: boolean;
+        mxymPhotoSwipeSetup?: boolean;
     }
 }
 
-interface SearchResult {
+export interface PagefindAPI {
+    options: (options: { excerptLength: number }) => Promise<void>;
+    search: (query: string) => Promise<{
+        results: Array<{
+            data: () => Promise<SearchResult>;
+        }>;
+    }>;
+}
+
+export interface SearchResult {
     url: string;
     meta: {
         title: string;

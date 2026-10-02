@@ -1,9 +1,12 @@
-/**
- * Hide the loading cover with a smooth fade-out animation
- */
+let hidden = false;
+
+/** Hide the loading cover as soon as the initial document is ready. */
 function hideLoadingCover() {
+    if (hidden) return;
+
     const loadingCover = document.getElementById("loading-cover");
     if (loadingCover) {
+        hidden = true;
         loadingCover.classList.add("loaded");
         // Remove from DOM after animation completes
         setTimeout(() => {
@@ -13,13 +16,20 @@ function hideLoadingCover() {
 }
 
 /**
- * Initialize loading cover functionality
- * Hides the loading cover when the page is fully loaded
+ * Initialize loading cover functionality without waiting for every image,
+ * font, or third-party resource to finish loading.
  */
 export function initLoadingCover() {
-    // Hide on window load (all resources loaded)
-    window.addEventListener("load", hideLoadingCover);
+    const showPage = () => requestAnimationFrame(hideLoadingCover);
 
-    // Fallback: hide after maximum 3 seconds
-    setTimeout(hideLoadingCover, 3000);
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", showPage, { once: true });
+    } else {
+        showPage();
+    }
+
+    document.addEventListener("astro:page-load", showPage, { once: true });
+
+    // Keep a short fallback for documents that fail before DOMContentLoaded.
+    window.setTimeout(hideLoadingCover, 1200);
 }
